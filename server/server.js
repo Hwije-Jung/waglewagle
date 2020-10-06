@@ -15,7 +15,7 @@ const { futimes } = require("fs");
 var connection = mysql.createConnection({
   host: "localhost",
   user: "root",
-  password: "root",
+  password: "jeong1207",
   database: "wagle",
 });
 

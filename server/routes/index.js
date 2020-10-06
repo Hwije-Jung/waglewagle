@@ -12,7 +12,7 @@ const { futimes } = require("fs");
 var connection = mysql.createConnection({
   host: "localhost",
   user: "root",
-  password: "root",
+  password: "jeong1207",
   database: "wagle",
 });
 
@@ -427,6 +427,113 @@ router.post("/CheckMatching", (req, res) => {
     });
   }
 });
+
+// ----------------------------------------------------------------------------------2 걍 라우터 추가
+router.post("/CheckMatching2", (req, res) => {
+  //동성 일때
+  if (req.body.sex === "M") {
+    connection.query("SELECT * FROM matching_table_m_same", [], function (
+      err,
+      rows,
+      fields
+    ) {
+      if (rows[0] === undefined) {
+        //매칭할 여자가 없을때 남자는 값을 넣는다.
+        //테이블 없음
+
+        connection.query(
+          "INSERT INTO matching_table_m_same (matching_userid) values (?)",
+          [req.body.userid],
+          function (err, rows, field) {
+            const touserid = {
+              touserid: undefined,
+            };
+
+            res.send(touserid); //생각
+          }
+        );
+      } else {
+        //매칭할 여자가 있을Eo
+        const userm = req.body.userid;
+        const userw = rows[0].matching_userid;
+        const lastmessage = "매칭이 성공적으로 되었습니다.";
+        connection.query(
+          "INSERT INTO wagle_room (room_userid,room_touserid,room_lastmessage,room_roomname) values (?,?,?,?)",
+          [userm, userw, lastmessage, userm + userw],
+          function (err, rows, field) {
+            connection.query(
+              "delete from matching_table_m_same where matching_userid = ?",
+              [userw],
+              function (err, rows, field) {
+                if (err) {
+                }
+
+                const match_info = {
+                  userid: userm,
+                  touserid: userw,
+                  roomname: userm + userw,
+                };
+                res.send(match_info);
+              }
+            );
+          }
+        );
+      }
+    });
+  } else {
+    //여자일떄
+
+    connection.query("SELECT * FROM matching_table_w_same", [], function (
+      err,
+      rows,
+      fields
+    ) {
+      if (rows[0] === undefined) {
+        //매칭할 남자가 없음 여자 값 넣음
+        //테이블 없음
+
+        connection.query(
+          "INSERT INTO matching_table_w_same (matching_userid) values (?)",
+          [req.body.userid],
+          function (err, rows, field) {
+            const touserid = {
+              touserid: undefined,
+            };
+
+            res.send(touserid); //생각
+          }
+        );
+      } else {
+        //매칭할 남자가 있을Eo
+        const userm = rows[0].matching_userid;
+        const userw = req.body.userid;
+        const lastmessage = "매칭이 성공적으로 되었습니다.";
+        connection.query(
+          "INSERT INTO wagle_room (room_userid,room_touserid,room_lastmessage,room_roomname) values (?,?,?,?)",
+          [userw, userm, lastmessage, userm + userw],
+          function (err, rows, field) {
+            connection.query(
+              "delete from matching_table_w_same where matching_userid = ?",
+              [userm],
+              function (err, rows, field) {
+                if (err) {
+                }
+
+                const match_info = {
+                  userid: userw,
+                  touserid: userm,
+                  roomname: userm + userw,
+                };
+                res.send(match_info);
+              }
+            );
+          }
+        );
+      }
+    });
+  }
+});
+
 //로그인 하는 부분
 router.post("/login", (req, res) => {
   const name = req.body.name;
